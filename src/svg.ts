@@ -6,6 +6,7 @@ export interface PlaceholderOptions {
   text: string;
   font: string;
   fmt: "svg";
+  gradient: [string, string] | null;
 }
 
 export const DEFAULTS: PlaceholderOptions = {
@@ -16,6 +17,7 @@ export const DEFAULTS: PlaceholderOptions = {
   text: "",
   font: "sans-serif",
   fmt: "svg",
+  gradient: null,
 };
 
 const HEX_RE = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
@@ -82,6 +84,15 @@ export function parseQuery(q: Record<string, unknown>): ParsedQuery {
     opts.text = text;
   }
 
+  if (q.gradient !== undefined) {
+    const parts = String(q.gradient).split(",");
+    if (parts.length !== 2 || !HEX_RE.test(parts[0]!) || !HEX_RE.test(parts[1]!)) {
+      errors.push("gradient must be two hex colors like %23ff0000,%230000ff");
+    } else {
+      opts.gradient = [parts[0]!, parts[1]!];
+    }
+  }
+
   if (q.font !== undefined) {
     const font = String(q.font);
     if (!/^[a-zA-Z0-9 _-]{1,40}$/.test(font)) {
@@ -114,8 +125,19 @@ export function renderSvg(o: PlaceholderOptions): string {
   const safeText = escapeXml(o.text);
   const safeFont = escapeXml(o.font);
 
+  const defs = o.gradient
+    ? `<defs>
+  <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="${o.gradient[0]}"/>
+    <stop offset="100%" stop-color="${o.gradient[1]}"/>
+  </linearGradient>
+</defs>
+`
+    : "";
+  const fill = o.gradient ? "url(#g)" : o.bg;
+
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${o.width}" height="${o.height}" viewBox="0 0 ${o.width} ${o.height}">
-  <rect width="100%" height="100%" fill="${o.bg}"/>
+  ${defs}<rect width="100%" height="100%" fill="${fill}"/>
   <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="${safeFont}" font-size="${fontSize}" fill="${o.fg}">${safeText}</text>
 </svg>
 `;
