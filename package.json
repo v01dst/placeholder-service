@@ -1,0 +1,26 @@
+{
+  "name": "placeholder-service",
+  "version": "1.0.0",
+  "description": "SVG placeholder image service — zero native deps, instant wireframe assets",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": ["placeholder", "svg", "wireframe", "dummy-images"],
+  "author": "v01dst",
+  "license": "MIT",
+  "dependencies": {
+    "fastify": "^5.12.1",
+    "tsx": "^4.23.13"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0"
+  }
+}
