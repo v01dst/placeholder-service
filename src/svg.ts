@@ -109,6 +109,15 @@ export function parseQuery(q: Record<string, unknown>): ParsedQuery {
   return { options: opts, errors };
 }
 
+function worstLineFits(
+  lines: string[],
+  fontSize: number,
+  charWidth: number,
+  maxWidth: number
+): boolean {
+  return lines.every((l) => l.length * fontSize * charWidth <= maxWidth);
+}
+
 function escapeXml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -120,11 +129,6 @@ function escapeXml(s: string): string {
 
 /** Render the placeholder as a standalone SVG string. */
 export function renderSvg(o: PlaceholderOptions): string {
-  const maxFontSize = Math.min(o.height / 4, o.width / (o.text.length * 0.62));
-  const fontSize = Math.max(10, Math.floor(maxFontSize));
-  const safeText = escapeXml(o.text);
-  const safeFont = escapeXml(o.font);
-
   const defs = o.gradient
     ? `<defs>
   <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -136,9 +140,44 @@ export function renderSvg(o: PlaceholderOptions): string {
     : "";
   const fill = o.gradient ? "url(#g)" : o.bg;
 
+  const maxTextWidth = o.width * 0.9;
+  const approxCharWidth = 0.58;
+  let fontSize = Math.max(
+    10,
+    Math.floor(Math.min(o.height / 4, (o.width / Math.max(o.text.length, 1)) / approxCharWidth))
+  );
+  let lines: string[] = [];
+
+  for (let attempt = 0; attempt < 12 && fontSize >= 10; attempt++) {
+    lines = [];
+    let current = "";
+    for (const w of o.text.split(/\s+/).filter(Boolean)) {
+      const candidate = current ? `${current} ${w}` : w;
+      if (candidate.length * fontSize * approxCharWidth <= maxTextWidth) {
+        current = candidate;
+      } else {
+        if (current) lines.push(current);
+        current = w;
+      }
+    }
+    if (current) lines.push(current);
+    if (worstLineFits(lines, fontSize, approxCharWidth, maxTextWidth)) break;
+    fontSize = Math.floor(fontSize * 0.85);
+  }
+
+  const lineHeight = Math.floor(fontSize * 1.25);
+  const startY =
+    o.height / 2 - ((lines.length - 1) * lineHeight) / 2 + fontSize * 0.35;
+  const tspans = lines
+    .map((line, i) => {
+      const y = Math.round(startY + i * lineHeight);
+      return `  <text x="50%" y="${y}" dominant-baseline="middle" text-anchor="middle" font-family="${escapeXml(o.font)}" font-size="${fontSize}" fill="${o.fg}">${escapeXml(line)}</text>`;
+    })
+    .join("\n");
+
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${o.width}" height="${o.height}" viewBox="0 0 ${o.width} ${o.height}">
   ${defs}<rect width="100%" height="100%" fill="${fill}"/>
-  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="${safeFont}" font-size="${fontSize}" fill="${o.fg}">${safeText}</text>
+${tspans}
 </svg>
 `;
 }

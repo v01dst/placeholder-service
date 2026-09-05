@@ -11,7 +11,6 @@
 ![Tests](https://img.shields.io/badge/tests-18%20passing-brightgreen)
 
 `svg output` · `crisp at any dpi` · `custom text & colors` · `cache-friendly`
-
 </div>
 
 ---
@@ -90,7 +89,5 @@ Built with ⚡ by **v01dst**
 
 [![GitHub](https://img.shields.io/badge/github-v01dst-181717?logo=github)](https://github.com/v01dst)
 [![Discord](https://img.shields.io/badge/discord-9p.1-5865F2?logo=discord&logoColor=white)](https://discord.com/users/9p.1)
-
-*Project 010 / 99 — The Loop*
 
 </div>

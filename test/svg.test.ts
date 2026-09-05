@@ -159,3 +159,67 @@ describe("gradient", () => {
     expect(svg).toContain('fill="#123456"');
   });
 });
+
+describe("text wrapping", () => {
+  it("wraps long text onto multiple text elements", () => {
+    const svg = renderSvg({
+      width: 300,
+      height: 200,
+      bg: "#000",
+      fg: "#fff",
+      text: "this is a very long placeholder sentence that will wrap",
+      font: "sans-serif",
+      fmt: "svg",
+      gradient: null,
+    });
+    const textTags = svg.match(/<text /g) ?? [];
+    expect(textTags.length).toBeGreaterThan(1);
+  });
+
+  it("keeps short text on one line", () => {
+    const svg = renderSvg({
+      width: 640,
+      height: 360,
+      bg: "#000",
+      fg: "#fff",
+      text: "Hero",
+      font: "sans-serif",
+      fmt: "svg",
+      gradient: null,
+    });
+    expect((svg.match(/<text /g) ?? []).length).toBe(1);
+  });
+
+  it("shrinks the font when a single word cannot fit", () => {
+    const svg = renderSvg({
+      width: 120,
+      height: 80,
+      bg: "#000",
+      fg: "#fff",
+      text: "Extraordinarily",
+      font: "sans-serif",
+      fmt: "svg",
+      gradient: null,
+    });
+    const size = Number(svg.match(/font-size="(\d+)"/)?.[1]);
+    expect(size).toBeLessThan(20);
+  });
+
+  it("every line fits the 90% width budget", () => {
+    const svg = renderSvg({
+      width: 300,
+      height: 200,
+      bg: "#000",
+      fg: "#fff",
+      text: "wrap this long sentence into several lines please",
+      font: "sans-serif",
+      fmt: "svg",
+      gradient: null,
+    });
+    const size = Number(svg.match(/font-size="(\d+)"/)?.[1]);
+    const texts = [...svg.matchAll(/font-size="\d+"[^>]*>([^<]+)</g)].map((m) => m[1]!);
+    for (const t of texts) {
+      expect(t.length * size * 0.58).toBeLessThanOrEqual(300 * 0.9 + 1);
+    }
+  });
+});
